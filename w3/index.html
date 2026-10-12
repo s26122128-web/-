@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>異國風情迷因產生器 | Exotic Meme Generator</title>
+    
+    <!-- 引入 Tailwind CSS 快速打造響應式排版 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Google Fonts (Rozha One: 濃濃異國風華麗標題, Anton: 迷因經典大粗體, Noto Sans TC: 繁體中文) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Noto+Sans+TC:wght@400;700;900&family=Rozha+One&display=swap" rel="stylesheet">
+    <!-- 引入 FontAwesome 圖示庫 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 引入 html2canvas 截圖工具 (解決網頁轉圖片需求) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        /* 設定主要字體與背景樣式 */
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #1a0f1d; /* 深黑紫摩洛哥夜空色 */
+            background-image: 
+                radial-gradient(circle at 20% 20%, rgba(194, 89, 42, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(20, 145, 155, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(212, 160, 23, 0.08) 0%, transparent 60%);
+            color: #f1e7d0;
+            min-height: 100vh;
+        }
+
+        /* 異國風格標題字型 */
+        .exotic-title {
+            font-family: 'Rozha One', 'Noto Sans TC', serif;
+        }
+
+        /* 迷因文字專用大粗體，帶有重度外框確保清晰可見 */
+        .meme-text {
+            font-family: 'Anton', 'Noto Sans TC', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #ffffff;
+            /* 使用強烈描邊與黑影，防止任何背景圖片導致看不清 */
+            text-shadow: 
+                3px 3px 0 #000, -3px -3px 0 #000,
+                3px -3px 0 #000, -3px 3px 0 #000,
+                0px 3px 0 #000, 0px -3px 0 #000,
+                3px 0px 0 #000, -3px 0px 0 #000,
+                4px 4px 8px rgba(0, 0, 0, 0.9);
+            line-height: 1.15;
+            word-break: break-word;
+        }
+
+        /* 卡片玻璃質感與異國金邊 */
+        .exotic-card {
+            background: rgba(36, 21, 41, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(212, 160, 23, 0.3);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 15px rgba(194, 89, 42, 0.15);
+        }
+
+        /* 異國風幾何邊框裝飾裝飾線 */
+        .moroccan-pattern-border {
+            border-image: linear-gradient(to right, #c2592a, #d4a017, #14919b, #d4a017, #c2592a) 1;
+        }
+
+        /* 滑桿客製化美化 */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            height: 8px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 22px;
+            width: 22px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #d4a017, #c2592a);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(212, 160, 23, 0.8);
+            border: 2px solid #ffffff;
+        }
+
+        /* 絢麗下載按鈕動態效果 */
+        .btn-exotic {
+            background: linear-gradient(135deg, #c2592a 0%, #d4a017 50%, #14919b 100%);
+            background-size: 200% auto;
+            transition: all 0.4s ease;
+        }
+        .btn-exotic:hover {
+            background-position: right center;
+            box-shadow: 0 0 25px rgba(212, 160, 23, 0.6);
+            transform: translateY(-2px);
+        }
+        .btn-exotic:active {
+            transform: translateY(1px);
+        }
+
+        /* 圖騰背景裝飾物 */
+        .bg-pattern {
+            background-image: radial-gradient(#d4a017 0.75px, transparent 0.75px);
+            background-size: 24px 24px;
+            opacity: 0.08;
+        }
+    </style>
+</head>
+<body class="relative min-h-screen flex flex-col justify-between p-3 sm:p-6 md:p-8">
+
+    <div class="fixed inset-0 pointer-events-none bg-pattern"></div>
+
+    <header class="max-w-6xl mx-auto w-full text-center mb-6 z-10">
+        <div class="inline-block relative">
+            <h1 class="exotic-title text-3xl sm:text-4xl md:text-5xl font-bold tracking-wider text-amber-400 drop-shadow-md">
+                <i class="fa-solid font-normal fa-gem text-teal-400 mr-2 text-2xl sm:text-3xl"></i> 異國風情迷因產生器
+            </h1>
+            <p class="text-xs sm:text-sm text-amber-200/70 mt-1 tracking-widest uppercase">
+                Exotic World Meme Generator • 打造專屬於你的歡樂圖文
+            </p>
+            <div class="h-0.5 w-3/4 mx-auto mt-3 bg-gradient-to-r from-transparent via-amber-500 to-transparent"></div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-start z-10 mb-8">
+
+        <!-- ===== 左側/上方：控制面板區塊 ===== -->
+        <section class="lg:col-span-5 exotic-card rounded-2xl p-5 sm:p-6 border-t-4 moroccan-pattern-border">
+            <h2 class="text-xl font-bold text-amber-300 border-b border-amber-500/20 pb-3 mb-5 flex items-center">
+                <i class="fa-solid fa-sliders text-teal-400 mr-2.5"></i> 創作控制台
+            </h2>
+
+            <!-- 1. 上傳圖片按鈕區塊 -->
+            <div class="mb-5">
+                <label class="block text-sm font-medium text-amber-100 mb-2">
+                    <i class="fa-solid fa-cloud-arrow-up text-amber-400 mr-1.5"></i> 上傳迷因底圖 (本機圖片)
+                </label>
+                <div class="relative">
+                    <input type="file" id="imageInput" accept="image/*" class="hidden">
+                    <label for="imageInput" class="w-full flex items-center justify-center px-4 py-3 border-2 border-dashed border-amber-500/40 rounded-xl hover:border-amber-400 bg-amber-950/20 hover:bg-amber-900/30 cursor-pointer transition text-sm text-amber-200 group">
+                        <i class="fa-solid fa-image text-xl mr-2 text-teal-400 group-hover:scale-110 transition-transform"></i>
+                        <span id="uploadText">點擊選擇電腦或手機中的圖片</span>
+                    </label>
+                </div>
+                <p class="text-[11px] text-amber-200/50 mt-1.5 flex items-center">
+                    <i class="fa-solid fa-shield-halved mr-1"></i> 使用 FileReader API 讀取，圖片完全不經過伺服器，100% 避開 CORS 錯誤。
+                </p>
+            </div>
+
+            <!-- 2. 文字輸入欄位 -->
+            <div class="space-y-4 mb-5">
+                <div>
+                    <label for="topTextInput" class="block text-sm font-medium text-amber-100 mb-1.5">
+                        <i class="fa-solid fa-font text-amber-400 mr-1.5"></i> 上方文字 (Top Text)
+                    </label>
+                    <input type="text" id="topTextInput" value="當你成功寫出零 BUG 的程式時" placeholder="請輸入上方文字..." 
+                        class="w-full px-3.5 py-2.5 bg-black/40 border border-amber-500/30 rounded-xl text-white placeholder-amber-100/30 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition">
+                </div>
+
+                <div>
+                    <label for="bottomTextInput" class="block text-sm font-medium text-amber-100 mb-1.5">
+                        <i class="fa-solid fa-font text-amber-400 mr-1.5"></i> 下方文字 (Bottom Text)
+                    </label>
+                    <input type="text" id="bottomTextInput" value="整個人都充滿了異國的神祕力量" placeholder="請輸入下方文字..." 
+                        class="w-full px-3.5 py-2.5 bg-black/40 border border-amber-500/30 rounded-xl text-white placeholder-amber-100/30 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition">
+                </div>
+            </div>
+
+            <!-- 3. 滑桿參數控制 -->
+            <div class="space-y-4 bg-black/20 p-4 rounded-xl border border-amber-500/10 mb-6">
+                <!-- 字體大小滑桿 -->
+                <div>
+                    <div class="flex justify-between text-xs font-medium text-amber-200 mb-1">
+                        <span><i class="fa-solid fa-text-height text-teal-400 mr-1"></i> 字體大小</span>
+                        <span id="fontSizeVal" class="text-amber-400 font-mono">32px</span>
+                    </div>
+                    <input type="range" id="fontSizeSlider" min="16" max="64" value="32" class="w-full">
+                </div>
+
+                <!-- 上方文字位置滑桿 -->
+                <div>
+                    <div class="flex justify-between text-xs font-medium text-amber-200 mb-1">
+                        <span><i class="fa-solid fa-arrows-up-down text-teal-400 mr-1"></i> 上方文字垂直位置</span>
+                        <span id="topPosVal" class="text-amber-400 font-mono">5%</span>
+                    </div>
+                    <input type="range" id="topPosSlider" min="0" max="40" value="5" class="w-full">
+                </div>
+
+                <!-- 下方文字位置滑桿 -->
+                <div>
+                    <div class="flex justify-between text-xs font-medium text-amber-200 mb-1">
+                        <span><i class="fa-solid fa-arrows-up-down text-teal-400 mr-1"></i> 下方文字垂直位置</span>
+                        <span id="bottomPosVal" class="text-amber-400 font-mono">5%</span>
+                    </div>
+                    <input type="range" id="bottomPosSlider" min="0" max="40" value="5" class="w-full">
+                </div>
+            </div>
+
+            <!-- 4. 一鍵下載按鈕 -->
+            <button id="downloadBtn" class="btn-exotic w-full py-3.5 px-6 rounded-xl font-bold text-white text-base shadow-lg flex items-center justify-center group">
+                <i class="fa-solid fa-download mr-2 group-hover:bounce"></i> 一鍵下載迷因圖 (my-meme.png)
+            </button>
+        </section>
+
+
+        <!-- ===== 右側/下方：迷因即時預覽區 ===== -->
+        <section class="lg:col-span-7 flex flex-col items-center">
+            <div class="w-full exotic-card rounded-2xl p-4 sm:p-5 border-t-4 moroccan-pattern-border flex flex-col items-center">
+                <h2 class="text-xl font-bold text-amber-300 border-b border-amber-500/20 pb-3 mb-4 w-full flex items-center justify-between">
+                    <span><i class="fa-solid fa-eye text-teal-400 mr-2"></i> 即時預覽區</span>
+                    <span class="text-xs font-normal text-amber-200/60 bg-amber-950/50 px-2.5 py-1 rounded-full border border-amber-500/20">Canvas HTML2Canvas</span>
+                </h2>
+
+                <!-- 迷因畫布封裝容器 (html2canvas 截圖的目標) -->
+                <div id="memeContainer" class="relative w-full overflow-hidden rounded-xl bg-black/60 flex items-center justify-center select-none shadow-2xl border border-amber-500/20 min-h-[300px] sm:min-h-[400px]">
+                    <!-- 迷因背景圖片 -->
+                    <img id="memeImage" src="" alt="迷因底圖" class="w-full h-auto max-h-[600px] object-contain block">
+
+                    <!-- 上方迷因文字疊加層 -->
+                    <div id="topTextDisplay" class="meme-text absolute w-full text-center px-4 left-1/2 transform -translate-x-1/2 pointer-events-none">
+                        上方文字範例
+                    </div>
+
+                    <!-- 下方迷因文字疊加層 -->
+                    <div id="bottomTextDisplay" class="meme-text absolute w-full text-center px-4 left-1/2 transform -translate-x-1/2 pointer-events-none">
+                        下方文字範例
+                    </div>
+                </div>
+
+                <p class="text-xs text-amber-200/50 mt-3 text-center">
+                    提示：調校左方的控制面板，可即時在上方查看最新視覺成果。
+                </p>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="max-w-6xl mx-auto w-full text-center text-xs text-amber-200/40 py-4 border-t border-amber-500/10 z-10">
+        <p>© Custom Exotic Meme Generator — Designed for Codepen & Single Page Showcase</p>
+    </footer>
+
+
+    <script>
+        // 等待所有 DOM 元素載入完成後執行
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // ===== 1. 取得 DOM 畫面元素 =====
+            const imageInput = document.getElementById('imageInput');
+            const uploadText = document.getElementById('uploadText');
+            const memeImage = document.getElementById('memeImage');
+            const memeContainer = document.getElementById('memeContainer');
+
+            const topTextInput = document.getElementById('topTextInput');
+            const bottomTextInput = document.getElementById('bottomTextInput');
+            const topTextDisplay = document.getElementById('topTextDisplay');
+            const bottomTextDisplay = document.getElementById('bottomTextDisplay');
+
+            const fontSizeSlider = document.getElementById('fontSizeSlider');
+            const topPosSlider = document.getElementById('topPosSlider');
+            const bottomPosSlider = document.getElementById('bottomPosSlider');
+
+            const fontSizeVal = document.getElementById('fontSizeVal');
+            const topPosVal = document.getElementById('topPosVal');
+            const bottomPosVal = document.getElementById('bottomPosVal');
+
+            const downloadBtn = document.getElementById('downloadBtn');
+
+            // ===== 2. 建立預設 SVG 底圖 (在使用者尚未上傳圖片時顯示) =====
+            function createDefaultPlaceholderImage() {
+                // 建立一個精美的異國風格預設 SVG 圖片
+                const svgString = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500">
+                    <defs>
+                        <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#3d1a24;stop-opacity:1" />
+                            <stop offset="50%" style="stop-color:#c2592a;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#14919b;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <rect width="800" height="500" fill="url(#grad)" />
+                    <!-- 異國風格幾何同心圓與菱形裝飾 -->
+                    <circle cx="400" cy="250" r="180" fill="none" stroke="#d4a017" stroke-width="2" stroke-dasharray="10 5" opacity="0.6"/>
+                    <circle cx="400" cy="250" r="140" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.4"/>
+                    <polygon points="400,90 560,250 400,410 240,250" fill="none" stroke="#d4a017" stroke-width="2" opacity="0.5"/>
+                    <text x="50%" y="48%" dominant-baseline="middle" text-anchor="middle" fill="#f1e7d0" font-family="sans-serif" font-size="28" font-weight="bold" opacity="0.85">請在左側上傳您的迷因底圖</text>
+                    <text x="50%" y="56%" dominant-baseline="middle" text-anchor="middle" fill="#d4a017" font-family="sans-serif" font-size="18" opacity="0.7">Upload Your Image To Start</text>
+                </svg>`;
+                
+                // 將 SVG 轉為 DataURL 設定給 img 標籤
+                const encodedSvg = encodeURIComponent(svgString);
+                memeImage.src = `data:image/svg+xml;charset=utf-8,${encodedSvg}`;
+            }
+
+            // 初始化預設圖片
+            createDefaultPlaceholderImage();
+
+
+            // ===== 3. 本機圖片上傳處理 (FileReader API - 解決 CORS 關鍵) =====
+            imageInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    // 使用 FileReader 讀取本機檔案
+                    const reader = new FileReader();
+                    
+                    // 當檔案讀取完成時觸發
+                    reader.onload = (event) => {
+                        // 將讀取到的 DataURL (base64) 賦予給 img 元素
+                        memeImage.src = event.target.result;
+                        uploadText.textContent = `已選擇：${file.name}`;
+                    };
+                    
+                    // 將圖片轉為 DataURL 格式讀取
+                    reader.readAsDataURL(file);
+                }
+            });
+
+
+            // ===== 4. 即時更新文字與位置樣式函數 =====
+            function updateMemeText() {
+                // 更新文字內容
+                topTextDisplay.textContent = topTextInput.value;
+                bottomTextDisplay.textContent = bottomTextInput.value;
+
+                // 取得滑桿數值
+                const size = fontSizeSlider.value;
+                const topPos = topPosSlider.value;
+                const bottomPos = bottomPosSlider.value;
+
+                // 顯示目前滑桿數值於介面上
+                fontSizeVal.textContent = `${size}px`;
+                topPosVal.textContent = `${topPos}%`;
+                bottomPosVal.textContent = `${bottomPos}%`;
+
+                // 動態調整文字 CSS 樣式
+                topTextDisplay.style.fontSize = `${size}px`;
+                bottomTextDisplay.style.fontSize = `${size}px`;
+
+                // 調整頂部文字與底部文字垂直距離
+                topTextDisplay.style.top = `${topPos}%`;
+                bottomTextDisplay.style.bottom = `${bottomPos}%`;
+            }
+
+            // ===== 5. 綁定輸入與滑桿事件 (實現即時同步預覽) =====
+            topTextInput.addEventListener('input', updateMemeText);
+            bottomTextInput.addEventListener('input', updateMemeText);
+
+            fontSizeSlider.addEventListener('input', updateMemeText);
+            topPosSlider.addEventListener('input', updateMemeText);
+            bottomPosSlider.addEventListener('input', updateMemeText);
+
+            // 初次執行一次，確保預設文字樣式同步
+            updateMemeText();
+
+
+            // ===== 6. 一鍵下載圖檔功能 (html2canvas) =====
+            downloadBtn.addEventListener('click', () => {
+                // 變更按鈕載入狀態提示
+                const originalBtnContent = downloadBtn.innerHTML;
+                downloadBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> 正在生成迷因圖...`;
+                downloadBtn.disabled = true;
+
+                // 使用 html2canvas 捕捉 #memeContainer 區塊
+                html2canvas(memeContainer, {
+                    scale: 2, // 提高解析度畫質 (2倍清晰度)
+                    useCORS: true, // 允許跨域圖片 (雖然我們使用的是 DataURL，但啟用更保險)
+                    backgroundColor: null, // 保持透明度
+                    logging: false
+                }).then(canvas => {
+                    // 將生成的 canvas 轉為 PNG DataURL
+                    const imageUrl = canvas.toDataURL('image/png');
+
+                    // 建立虛擬 <a> 標籤觸發瀏覽器下載
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = imageUrl;
+                    downloadLink.download = 'my-meme.png'; // 下載的檔名
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+
+                    // 恢復按鈕狀態
+                    downloadBtn.innerHTML = originalBtnContent;
+                    downloadBtn.disabled = false;
+                }).catch(err => {
+                    console.error('截圖生成失敗：', err);
+                    alert('迷因產生失敗，請稍後再試！');
+                    downloadBtn.innerHTML = originalBtnContent;
+                    downloadBtn.disabled = false;
+                });
+            });
+
+        });
+    </script>
+</body>
+</html>
