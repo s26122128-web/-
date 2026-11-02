@@ -43,4 +43,375 @@
       background-image: radial-gradient(#e2d7c3 1px, transparent 1px);
       background-size: 20px 20px;
       color: var(--text-main);
-      font-family: '
+      font-family: 'Shippori Mincho', 'Noto Serif TC', "Songti TC", serif;
+      min-height: 100vh;
+      padding: 2.5rem 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      margin-bottom: 2.5rem;
+      text-align: center;
+      position: relative;
+    }
+
+    header h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      letter-spacing: 4px;
+      color: var(--text-main);
+      border-bottom: 2px solid var(--highlight-color);
+      padding-bottom: 0.5rem;
+      display: inline-block;
+    }
+
+    header p {
+      margin-top: 0.5rem;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      letter-spacing: 2px;
+    }
+
+    /* =========================================================
+       2. 日式復古 Loading 讀取動畫 (和風風車 / 菊花紋)
+       ========================================================= */
+    #loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin-top: 4rem;
+    }
+
+    /* 旋轉和風徽章 */
+    .pinwheel {
+      width: 48px;
+      height: 48px;
+      border: 3px solid var(--card-border);
+      border-top-color: var(--highlight-color);
+      border-bottom-color: var(--highlight-color);
+      border-radius: 50%;
+      animation: spin 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      margin-top: 1.2rem;
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      letter-spacing: 3px;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+
+    /* =========================================================
+       3. 瀑布流牆 (Masonry Layout)
+       ========================================================= */
+    .masonry-wall {
+      width: 100%;
+      max-width: 1100px;
+      
+      /* 核心：使用 column-count 實現瀑布流高低錯落排版 */
+      column-count: 3; 
+      column-gap: 1.8rem;
+      
+      /* 隱藏預設，載入完成後由 JS 改為 block */
+      display: none; 
+    }
+
+    /* 響應式調整：依螢幕寬度自動切換欄數 */
+    @media (max-width: 900px) {
+      .masonry-wall { column-count: 2; }
+    }
+    @media (max-width: 600px) {
+      .masonry-wall { column-count: 1; }
+    }
+
+    /* =========================================================
+       4. 日式短冊卡片與輪播動畫
+       ========================================================= */
+    .card {
+      /* 防止卡片內部跨欄斷開 */
+      break-inside: avoid;
+      margin-bottom: 1.8rem;
+      
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 4px; /* 偏方正的日式傳統書籤感 */
+      padding: 1.5rem 1.25rem;
+      box-shadow: 2px 3px 8px rgba(0, 0, 0, 0.04);
+      
+      /* 平滑過渡動畫 (輪播變亮/變暗的關鍵) */
+      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+
+    /* 左側紅色細線，仿傳統日式便籤 */
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background-color: var(--card-border);
+      transition: background-color 0.6s ease;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 1rem;
+      border-bottom: 1px dashed var(--card-border);
+      padding-bottom: 0.5rem;
+    }
+
+    .card-name {
+      font-weight: 700;
+      font-size: 1.15rem;
+      color: var(--text-main);
+      letter-spacing: 1px;
+    }
+
+    .card-time {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .card-content {
+      font-size: 0.98rem;
+      line-height: 1.8;
+      color: #333333;
+      white-space: pre-wrap; /* 保留留言中的換行 */
+      letter-spacing: 0.5px;
+    }
+
+    /* 仿日式印章飾角 */
+    .card-stamp {
+      display: inline-block;
+      margin-top: 1rem;
+      font-size: 0.75rem;
+      color: var(--stamp-color);
+      border: 1px solid var(--stamp-color);
+      padding: 1px 6px;
+      border-radius: 3px;
+      transform: rotate(-3deg);
+      opacity: 0.8;
+    }
+
+    /* --- 輪播狀態：被選中的卡片 (Highlight 放大亮起) --- */
+    .card.active {
+      transform: scale(1.06) translateY(-4px); /* 放大並微微浮起 */
+      border-color: var(--highlight-color);
+      background-color: var(--highlight-bg);
+      box-shadow: 0 10px 25px var(--highlight-glow), 0 0 0 1px var(--highlight-color);
+      z-index: 10;
+      opacity: 1;
+      filter: blur(0px);
+    }
+
+    .card.active::before {
+      background-color: var(--highlight-color); /* 左側細條變紅色 */
+    }
+
+    /* --- 輪播狀態：沒被選中的卡片 (Dimmed 變暗變模糊) --- */
+    .card.dimmed {
+      opacity: 0.45;        /* 降低透明度 */
+      filter: blur(1.2px);  /* 稍微模糊 */
+      transform: scale(0.97);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>風の便り ‧ 留言牆</h1>
+    <p>— 朋友傳達的情意與悄悄話 —</p>
+  </header>
+
+  <!-- 日式讀取動畫 -->
+  <div id="loading">
+    <div class="pinwheel"></div>
+    <div class="loading-text">讀取留言中...</div>
+  </div>
+
+  <!-- 留言瀑布流牆 -->
+  <div id="wall" class="masonry-wall"></div>
+
+  <script>
+    /* =========================================================
+       【修改設定區塊】
+       ========================================================= */
+    // 1. Google 試算表 CSV 網址：
+    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRP1yQhCZ1SXaV6mdLNgmL0KrahERE8J_yejnhcUY1asQiuXMEsvEe5czylsz4zDPvK-G4LoOSj7zR_/pub?output=csv'; 
+    
+    // 2. 輪播間隔時間 (單位：毫秒，3000 表示 3 秒，若要改 5 秒請設為 5000)
+    const ROTATION_INTERVAL_MS = 3000; 
+
+    /* =========================================================
+       全域變數與 DOM 元素
+       ========================================================= */
+    const loadingEl = document.getElementById('loading');
+    const wallEl = document.getElementById('wall');
+    let cards = []; // 存放所有生成的 DOM 卡片
+    let currentIndex = 0; // 當前輪播焦點的索引
+    let timer = null; // setInterval 計時器
+
+    /* =========================================================
+       CSV 解析器 (可正確處理包含雙引號與逗號的留言內容)
+       ========================================================= */
+    function parseCSV(text) {
+      const lines = text.trim().split(/\r\n|\n/);
+      const result = [];
+
+      lines.forEach((line, index) => {
+        // 跳過 CSV 的標題列 (Header)
+        if (index === 0) return; 
+
+        const row = [];
+        let insideQuotes = false;
+        let entry = '';
+
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          if (char === '"') {
+            insideQuotes = !insideQuotes; // 切換雙引號狀態
+          } else if (char === ',' && !insideQuotes) {
+            row.push(entry.trim());
+            entry = '';
+          } else {
+            entry += char;
+          }
+        }
+        row.push(entry.trim());
+
+        // 清理單個欄位開頭與結尾的引號
+        const cleanRow = row.map(col => col.replace(/^"|"$/g, '').replace(/""/g, '"'));
+
+        // 預設欄位順序：[0]時間戳記, [1]名字, [2]悄悄話
+        if (cleanRow.length >= 3) {
+          result.push({
+            time: cleanRow[0],
+            name: cleanRow[1],
+            content: cleanRow[2]
+          });
+        }
+      });
+
+      return result;
+    }
+
+    /* =========================================================
+       動態生成留言卡片
+       ========================================================= */
+    function renderCards(data) {
+      if (data.length === 0) {
+        wallEl.innerHTML = '<p style="text-align:center; color: var(--text-muted);">目前尚無留言。</p>';
+        return;
+      }
+
+      wallEl.innerHTML = ''; // 清空牆面
+      cards = []; // 重置卡片陣列
+
+      data.forEach((item) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        // 格式化時間 (格式如：10/19 14:35)
+        let formattedTime = item.time;
+        try {
+          const d = new Date(item.time);
+          if (!isNaN(d)) {
+            formattedTime = `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+          }
+        } catch(e) {}
+
+        card.innerHTML = `
+          <div class="card-header">
+            <span class="card-name">${escapeHTML(item.name)}</span>
+            <span class="card-time">${escapeHTML(formattedTime)}</span>
+          </div>
+          <div class="card-content">${escapeHTML(item.content)}</div>
+          <div class="card-stamp">絆</div>
+        `;
+
+        wallEl.appendChild(card);
+        cards.push(card);
+      });
+    }
+
+    // 防範 XSS 攻擊的字串轉義函式
+    function escapeHTML(str) {
+      return str.replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+      );
+    }
+
+    /* =========================================================
+       隨時間輪播亮起特效 (Highlight Cycle)
+       ========================================================= */
+    function startHighlightCycle() {
+      if (cards.length === 0) return;
+
+      // 立即執行第一次亮起
+      updateHighlight();
+
+      // 設定計時器，依序輪播
+      timer = setInterval(() => {
+        currentIndex = (currentIndex + 1) % cards.length;
+        updateHighlight();
+      }, ROTATION_INTERVAL_MS);
+    }
+
+    function updateHighlight() {
+      cards.forEach((card, index) => {
+        if (index === currentIndex) {
+          card.classList.add('active');
+          card.classList.remove('dimmed');
+        } else {
+          card.classList.remove('active');
+          card.classList.add('dimmed');
+        }
+      });
+    }
+
+    /* =========================================================
+       資料串接 (fetch CSV)
+       ========================================================= */
+    async function fetchMessages() {
+      try {
+        const response = await fetch(CSV_URL);
+        if (!response.ok) throw new Error('網路回應錯誤');
+        
+        const csvText = await response.text();
+        const data = parseCSV(csvText);
+
+        // 關閉 Loading 動畫，顯示瀑布流牆
+        loadingEl.style.display = 'none';
+        wallEl.style.display = 'block';
+
+        // 渲染卡片並啟動輪播
+        renderCards(data);
+        startHighlightCycle();
+
+      } catch (error) {
+        console.error('讀取 CSV 失敗:', error);
+        loadingEl.innerHTML = `<div style="color: var(--highlight-color);">⚠️ 讀取留言失敗，請確認試算表已發布到網路。</div>`;
+      }
+    }
+
+    // 頁面載入完成後執行
+    document.addEventListener('DOMContentLoaded', fetchMessages);
+  </script>
+</body>
+</html>
