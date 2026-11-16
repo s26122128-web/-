@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雲端心電感應 - 多人默契考驗</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for Japanese Retro Aesthetic -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Noto+Serif+TC:wght@600;900&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        kraft: {
+                            50: '#FAF6F0',
+                            100: '#F4EBE1',
+                            200: '#E7D7C3',
+                            300: '#D9C2A5',
+                            800: '#5C4A38',
+                            900: '#2B2421',
+                        },
+                        matcha: {
+                            light: '#88A090',
+                            DEFAULT: '#4A6B5D',
+                            dark: '#354E43',
+                        },
+                        terracotta: {
+                            light: '#E06D53',
+                            DEFAULT: '#C84B31',
+                            dark: '#9E341E',
+                        },
+                        mustard: {
+                            DEFAULT: '#D99B26',
+                            dark: '#B07B18',
+                        }
+                    },
+                    fontFamily: {
+                        retro: ['"Zen Maru Gothic"', 'sans-serif'],
+                        serifTC: ['"Noto Serif TC"', 'serif'],
+                    },
+                    boxShadow: {
+                        'retro-sm': '2px 2px 0px #2B2421',
+                        'retro': '4px 4px 0px #2B2421',
+                        'retro-lg': '6px 6px 0px #2B2421',
+                        'retro-xl': '8px 8px 0px #2B2421',
+                        'retro-inner': 'inset 2px 2px 4px rgba(43, 36, 33, 0.2)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            background-color: #F4EBE1;
+            background-image: radial-gradient(#D9C2A5 0.75px, transparent 0.75px);
+            background-size: 16px 16px;
+            color: #2B2421;
+        }
+
+        /* Washi Tape Ribbon Effect */
+        .washi-tape {
+            background-color: rgba(217, 155, 38, 0.4);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            clip-path: polygon(0% 0%, 100% 2%, 98% 100%, 2% 98%);
+        }
+
+        /* Retro Hanko Stamp */
+        .hanko-stamp {
+            border: 3px solid #C84B31;
+            color: #C84B31;
+            font-family: 'Noto Serif TC', serif;
+            font-weight: 900;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transform: rotate(-8deg);
+            box-shadow: 0 0 2px rgba(200, 75, 49, 0.4);
+            text-shadow: 1px 1px 0px rgba(200, 75, 49, 0.2);
+            user-select: none;
+        }
+        .hanko-stamp:hover {
+            transform: rotate(0deg) scale(1.05);
+        }
+
+        /* 3D Flip Card Scene */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-style: preserve-3d;
+        }
+
+        .card-inner.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 0.75rem;
+        }
+
+        .card-front {
+            transform: rotateY(0deg);
+        }
+
+        .card-back {
+            transform: rotateY(180deg);
+        }
+
+        /* Japanese Retro Pattern for Card Back (unrevealed front side) */
+        .seigaiha-pattern {
+            background-color: #4A6B5D;
+            background-image: radial-gradient(circle at 50% 100%, transparent 40%, rgba(244, 235, 225, 0.15) 40%, rgba(244, 235, 225, 0.15) 60%, transparent 60%);
+            background-size: 24px 12px;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #E7D7C3;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4A6B5D;
+            border-radius: 4px;
+        }
+
+        /* Pulse Ring for active round */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+        .animate-pulse-gentle {
+            animation: pulse-ring 3s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-terracotta selection:text-white">
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Header Section -->
+    <header class="border-b-4 border-kraft-900 bg-kraft-100 py-3 px-4 sm:px-8 shadow-sm">
+        <div class="max-w-5xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="goHomeIfConfirmed()">
+                <div class="w-10 h-10 sm:w-12 sm:h-12 bg-terracotta text-kraft-50 border-2 border-kraft-900 rounded-lg flex items-center justify-center font-black text-xl sm:text-2xl shadow-retro-sm">
+                    心
+                </div>
+                <div>
+                    <h1 class="font-serifTC text-xl sm:text-2xl font-black tracking-wide text-kraft-900">
+                        雲端心電感應
+                    </h1>
+                    <p class="text-xs text-kraft-800 font-medium tracking-wider">多人默契考驗 • 🎴 翻牌會心</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <!-- Status Badge -->
+                <div id="connectionBadge" class="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-kraft-200 border-2 border-kraft-900 rounded-full text-xs font-bold shadow-retro-sm">
+                    <span id="connDot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span id="connText">GAS 連線中</span>
+                </div>
+
+                <!-- Hidden Host Toggle Seal (Hanko Button) -->
+                <button id="hankoBtn" title="點擊開啟/隱藏房主控制台" onclick="toggleHostPanel()" class="hanko-stamp w-11 h-11 text-sm bg-kraft-50 hover:bg-terracotta/10 transition-transform cursor-pointer relative">
+                    秘
+                    <span id="hostIndicatorDot" class="hidden absolute -top-1 -right-1 w-3.5 h-3.5 bg-terracotta border-2 border-kraft-900 rounded-full"></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-5xl w-full mx-auto p-4 sm:p-6 flex-grow flex flex-col justify-center">
+
+        <!-- ================= PAGE 1: LOGIN / JOIN ROOM ================= -->
+        <section id="viewLogin" class="max-w-md mx-auto w-full my-auto">
+            <div class="bg-kraft-50 border-4 border-kraft-900 rounded-2xl p-6 sm:p-8 shadow-retro-lg relative overflow-hidden">
+                <!-- Decorative Washi Tape -->
+                <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-32 h-7 washi-tape flex items-center justify-center font-bold text-xs text-kraft-900 rotate-1">
+                    心電相通 ⛩️
+                </div>
+
+                <div class="text-center mt-2 mb-6">
+                    <h2 class="text-2xl font-black text-kraft-900 font-serifTC mb-1">參與心電對決</h2>
+                    <p class="text-sm text-kraft-800">輸入暱稱與房號，測試與朋友的終極默契！</p>
+                </div>
+
+                <form onsubmit="handleJoinRoom(event)" class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-bold text-kraft-900 mb-1.5">玩家暱稱</label>
+                        <input type="text" id="inputPlayerName" required maxlength="12" placeholder="例如：櫻花小丸子"
+                            class="w-full px-4 py-3 bg-white border-3 border-kraft-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-terracotta shadow-retro-sm font-bold text-kraft-900">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label class="block text-sm font-bold text-kraft-900">遊戲房間號碼</label>
+                            <button type="button" onclick="generateRandomRoom()" class="text-xs font-bold text-matcha hover:underline">
+                                🎲 隨機產生房號
+                            </button>
+                        </div>
+                        <input type="text" id="inputRoomCode" required maxlength="10" placeholder="例如：8888 或 抹茶"
+                            class="w-full px-4 py-3 bg-white border-3 border-kraft-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-terracotta shadow-retro-sm font-bold tracking-widest text-kraft-900 uppercase">
+                    </div>
+
+                    <div class="pt-2 flex items-center justify-between border-t border-kraft-200">
+                        <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox" id="chkIsHost" class="w-5 h-5 rounded border-2 border-kraft-900 text-terracotta focus:ring-terracotta">
+                            <span class="text-sm font-bold text-kraft-900">我將擔任本局房主 👑</span>
+                        </label>
+                    </div>
+
+                    <button type="submit" id="btnJoinSubmit"
+                        class="w-full py-3.5 bg-terracotta hover:bg-terracotta-dark text-kraft-50 font-black text-lg border-3 border-kraft-900 rounded-xl shadow-retro hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-1 active:translate-y-1 transition-all cursor-pointer">
+                        進入遊戲房間 ➔
+                    </button>
+                </form>
+
+                <!-- System / API Mode Info -->
+                <div class="mt-6 pt-4 border-t border-dashed border-kraft-300 text-center text-xs text-kraft-800">
+                    <span class="font-bold">連線 API:</span> Google Apps Script Sync
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= PAGE 2: MAIN GAME ROOM ================= -->
+        <section id="viewGame" class="hidden flex-col gap-6 w-full">
+
+            <!-- Room Info Bar -->
+            <div class="bg-kraft-50 border-3 border-kraft-900 rounded-xl p-4 shadow-retro flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <span class="bg-mustard text-kraft-900 text-xs font-black px-2.5 py-1 rounded-md border-2 border-kraft-900 shadow-retro-sm">
+                        ROOM
+                    </span>
+                    <span id="displayRoomCode" class="font-black text-xl tracking-wider text-kraft-900">----</span>
+                    <button onclick="copyRoomLink()" class="px-2 py-1 text-xs bg-kraft-200 hover:bg-kraft-300 border border-kraft-900 rounded font-bold" title="複製房間代碼">
+                        📋 複製代碼
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <div class="text-sm font-bold text-kraft-900 flex items-center gap-1.5">
+                        <span>玩家:</span>
+                        <span id="displayPlayerName" class="text-terracotta font-black">---</span>
+                        <span id="hostBadge" class="hidden text-xs bg-terracotta text-white px-2 py-0.5 rounded-full border border-kraft-900">房主</span>
+                    </div>
+
+                    <button onclick="leaveRoom()" class="text-xs font-bold text-kraft-800 hover:text-terracotta underline">
+                        離開房間
+                    </button>
+                </div>
+            </div>
+
+
+            <!-- Hidden Host Control Drawer (Expandable) -->
+            <div id="hostPanel" class="hidden bg-terracotta/10 border-3 border-terracotta rounded-xl p-4 sm:p-5 shadow-retro transition-all">
+                <div class="flex items-center justify-between mb-3 border-b-2 border-terracotta/30 pb-2">
+                    <div class="flex items-center gap-2">
+                        <span class="hanko-stamp w-7 h-7 text-xs bg-kraft-50">主</span>
+                        <h3 class="font-black text-lg text-terracotta-dark font-serifTC">隱藏房主控制台</h3>
+                    </div>
+                    <span class="text-xs bg-terracotta text-white px-2 py-0.5 rounded font-bold">Host Controls</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                    <!-- Host Action 1: Set Question -->
+                    <div class="md:col-span-8 flex flex-col gap-1.5">
+                        <label class="text-xs font-bold text-kraft-900">設定本輪考驗題目：</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="hostQuestionInput" placeholder="例如：講到夜市小吃第一個想到什麼？" maxlength="30"
+                                class="flex-1 px-3 py-2 bg-white border-2 border-kraft-900 rounded-lg text-sm font-bold focus:outline-none focus:ring-2 focus:ring-terracotta">
+                            <button onclick="hostSetQuestion()" class="px-4 py-2 bg-matcha hover:bg-matcha-dark text-white font-bold text-sm border-2 border-kraft-900 rounded-lg shadow-retro-sm whitespace-nowrap active:translate-y-0.5">
+                                出題！📢
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Host Action 2 & 3: Reveal & Reset -->
+                    <div class="md:col-span-4 flex items-center gap-2">
+                        <button onclick="hostRevealAnswers()" class="flex-1 py-2 bg-terracotta hover:bg-terracotta-dark text-white font-black text-sm border-2 border-kraft-900 rounded-lg shadow-retro-sm active:translate-y-0.5">
+                            🎴 揭曉開牌
+                        </button>
+                        <button onclick="hostResetRound()" class="px-3 py-2 bg-kraft-200 hover:bg-kraft-300 text-kraft-900 font-bold text-sm border-2 border-kraft-900 rounded-lg shadow-retro-sm">
+                            🔄 重置下一輪
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Presets Quick Choice -->
+                <div class="mt-3 flex flex-wrap items-center gap-1.5 text-xs">
+                    <span class="font-bold text-kraft-800">快速靈感題目：</span>
+                    <button onclick="setPresetQuestion('講到台灣必喝手搖飲？')" class="px-2 py-1 bg-kraft-50 border border-kraft-900 rounded hover:bg-kraft-200 font-medium">🧋 必喝手搖飲</button>
+                    <button onclick="setPresetQuestion('剪刀石頭布，你第一拳會出什麼？')" class="px-2 py-1 bg-kraft-50 border border-kraft-900 rounded hover:bg-kraft-200 font-medium">✊ 猜拳出什麼</button>
+                    <button onclick="setPresetQuestion('講到夏天會聯想到的代表物？')" class="px-2 py-1 bg-kraft-50 border border-kraft-900 rounded hover:bg-kraft-200 font-medium">🍉 夏天聯想</button>
+                    <button onclick="setPresetQuestion('最想去日本哪一個城市旅遊？')" class="px-2 py-1 bg-kraft-50 border border-kraft-900 rounded hover:bg-kraft-200 font-medium">🗾 日本旅遊</button>
+                </div>
+            </div>
+
+
+            <!-- Question Display Banner -->
+            <div class="bg-kraft-50 border-4 border-kraft-900 rounded-2xl p-6 shadow-retro-lg text-center relative overflow-hidden">
+                <div class="absolute -top-3 right-6 w-24 h-6 washi-tape flex items-center justify-center text-xs font-bold text-kraft-900">
+                    本輪心電題目
+                </div>
+
+                <div id="questionWrapper" class="py-2">
+                    <span id="roundStatusBadge" class="inline-block px-3 py-1 bg-mustard text-kraft-900 text-xs font-black rounded-full border-2 border-kraft-900 mb-3">
+                        等待房主出題
+                    </span>
+                    <h2 id="displayQuestion" class="text-2xl sm:text-3xl font-black text-kraft-900 font-serifTC leading-snug">
+                        靜候房主派發題目中... 🍵
+                    </h2>
+                </div>
+            </div>
+
+
+            <!-- Player Input Section (Active during 'playing' stage) -->
+            <div id="sectionPlayerSubmit" class="bg-matcha/10 border-3 border-matcha rounded-xl p-5 shadow-retro">
+                <form onsubmit="handleAnswerSubmit(event)" class="flex flex-col sm:flex-row gap-3 items-center">
+                    <div class="flex-1 w-full">
+                        <label class="block text-xs font-bold text-matcha-dark mb-1">請填寫你的回答 (限 15 字以內)：</label>
+                        <input type="text" id="inputPlayerAnswer" maxlength="15" placeholder="寫下心中的第一直覺..." required
+                            class="w-full px-4 py-3 bg-white border-3 border-kraft-900 rounded-xl text-base font-bold text-kraft-900 focus:outline-none focus:ring-2 focus:ring-matcha shadow-retro-sm">
+                    </div>
+                    <button type="submit" id="btnSubmitAnswer"
+                        class="w-full sm:w-auto px-8 py-3.5 bg-matcha hover:bg-matcha-dark text-white font-black text-base border-3 border-kraft-900 rounded-xl shadow-retro hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-1 active:translate-y-1 transition-all whitespace-nowrap cursor-pointer">
+                        傳送心電答案 ⚡
+                    </button>
+                </form>
+                <p id="submitStatusText" class="text-xs font-bold text-matcha-dark mt-2 hidden">
+                    ✓ 答案已送出！可重複修改答案並重新送出。
+                </p>
+            </div>
+
+
+            <!-- Telepathy Consensus Results Bar (Revealed Only) -->
+            <div id="sectionResults" class="hidden bg-mustard/20 border-3 border-mustard-dark rounded-xl p-5 shadow-retro">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-16 h-16 bg-mustard border-3 border-kraft-900 rounded-full flex flex-col items-center justify-center shadow-retro-sm">
+                            <span class="text-xs font-bold text-kraft-900">默契指數</span>
+                            <span id="telepathyScore" class="text-xl font-black text-kraft-900 leading-none">0%</span>
+                        </div>
+                        <div>
+                            <h4 id="resultTitle" class="text-lg font-black text-kraft-900 font-serifTC">心電感應結果揭曉！</h4>
+                            <p id="resultSubtitle" class="text-xs font-bold text-kraft-800">看看大家是不是心有靈犀？</p>
+                        </div>
+                    </div>
+                    
+                    <div id="topMatchBadge" class="px-4 py-2 bg-kraft-50 border-2 border-kraft-900 rounded-lg text-sm font-bold text-terracotta shadow-retro-sm">
+                        最高一致回答: <span id="topMatchText" class="font-black">--</span>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Player Cards Grid (3D CSS Flip Cards) -->
+            <div>
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-black text-lg text-kraft-900 flex items-center gap-2">
+                        <span>🎴 玩家心電牌陣</span>
+                        <span id="answerCountBadge" class="text-xs bg-kraft-200 border border-kraft-900 px-2 py-0.5 rounded-full font-bold">
+                            0 人已填答
+                        </span>
+                    </h3>
+                    <span class="text-xs text-kraft-800 font-medium">每 2 秒自動同步全網狀態</span>
+                </div>
+
+                <!-- Empty State -->
+                <div id="cardsEmptyState" class="bg-kraft-50 border-3 border-dashed border-kraft-300 rounded-xl p-8 text-center text-kraft-800">
+                    目前尚無玩家加入或填答...
+                </div>
+
+                <!-- Grid -->
+                <div id="cardsGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-5">
+                    <!-- Dynamic 3D Cards Inserted Here -->
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t-3 border-kraft-900 bg-kraft-100 py-4 px-4 text-center text-xs font-bold text-kraft-800">
+        <p>雲端心電感應 • 3D Flip Interactive Telepathy Game</p>
+    </footer>
+
+    <!-- Audio Effects Controller using Web Audio API -->
+    <script>
+        // Web Audio API Synthesizer (No external audio asset dependencies)
+        class SoundFX {
+            constructor() {
+                this.ctx = null;
+            }
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) this.ctx = new AudioCtx();
+                }
+            }
+            playClick() {
+                this.init();
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + 0.05);
+                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.05);
+            }
+            playFlip() {
+                this.init();
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(200, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(600, this.ctx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.15);
+            }
+            playFanfare() {
+                this.init();
+                if (!this.ctx) return;
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                notes.forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.value = freq;
+                    const startTime = this.ctx.currentTime + (idx * 0.08);
+                    gain.gain.setValueAtTime(0.2, startTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.3);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(startTime);
+                    osc.stop(startTime + 0.3);
+                });
+            }
+        }
+        const sfx = new SoundFX();
+    </script>
+
+    <!-- Main Game Logic JavaScript -->
+    <script>
+        // ================= CONFIGURATION & GLOBAL STATE =================
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbybgIrkWrVgRkq6MB8y5gWZgT-jpkWOrUJw8KvAp6Y8kuwKThpuyaWehiLI31VdI3D5/exec";
+
+        let state = {
+            roomCode: '',
+            playerName: '',
+            isHost: false,
+            hostPanelVisible: false,
+            status: 'setup', // 'setup' | 'playing' | 'revealed'
+            question: '',
+            answers: {}, // { playerName: answerString }
+            pollingTimer: null,
+            previousStatus: 'setup',
+            localFallbackMode: false,
+            lastRawAnswersJSON: ''
+        };
+
+        // Japanese Retro Color Palette for revealed matching answers
+        const MATCH_COLORS = [
+            { bg: 'bg-terracotta/20', border: 'border-terracotta', text: 'text-terracotta-dark', badge: 'bg-terracotta text-white' },
+            { bg: 'bg-matcha/20', border: 'border-matcha', text: 'text-matcha-dark', badge: 'bg-matcha text-white' },
+            { bg: 'bg-mustard/30', border: 'border-mustard-dark', text: 'text-kraft-900', badge: 'bg-mustard text-kraft-900' },
+            { bg: 'bg-amber-100', border: 'border-amber-700', text: 'text-amber-900', badge: 'bg-amber-700 text-white' },
+            { bg: 'bg-emerald-100', border: 'border-emerald-700', text: 'text-emerald-900', badge: 'bg-emerald-700 text-white' },
+        ];
+
+        // Local Storage / Memory Simulated Backend Fallback (if GAS API experiences CORS or offline issues)
+        const localSimulatedDB = {};
+
+        // ================= TOAST NOTIFICATION UTILITY =================
+        function showToast(msg, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const bgClass = type === 'error' ? 'bg-terracotta text-white' : (type === 'success' ? 'bg-matcha text-white' : 'bg-kraft-900 text-kraft-50');
+            toast.className = `px-4 py-2.5 rounded-xl border-2 border-kraft-900 shadow-retro font-bold text-sm transform transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto ${bgClass}`;
+            toast.textContent = msg;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', '-translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // ================= ROOM JOIN & INITIALIZATION =================
+        function generateRandomRoom() {
+            const rand = Math.floor(1000 + Math.random() * 9000).toString();
+            document.getElementById('inputRoomCode').value = rand;
+            sfx.playClick();
+        }
+
+        function handleJoinRoom(e) {
+            e.preventDefault();
+            sfx.playClick();
+
+            const name = document.getElementById('inputPlayerName').value.trim();
+            const room = document.getElementById('inputRoomCode').value.trim().toUpperCase();
+            const isHost = document.getElementById('chkIsHost').checked;
+
+            if (!name || !room) {
+                showToast('請完整填寫暱稱與房號！', 'error');
+                return;
+            }
+
+            state.playerName = name;
+            state.roomCode = room;
+            state.isHost = isHost;
+
+            // UI Adjustments for Game View
+            document.getElementById('displayRoomCode').textContent = room;
+            document.getElementById('displayPlayerName').textContent = name;
+            
+            if (isHost) {
+                document.getElementById('hostBadge').classList.remove('hidden');
+                document.getElementById('hostIndicatorDot').classList.remove('hidden');
+                setHostPanelVisibility(true);
+            } else {
+                document.getElementById('hostBadge').classList.add('hidden');
+                document.getElementById('hostIndicatorDot').classList.add('hidden');
+                setHostPanelVisibility(false);
+            }
+
+            // Switch Screen Views
+            document.getElementById('viewLogin').classList.add('hidden');
+            document.getElementById('viewGame').classList.remove('hidden');
+            document.getElementById('viewGame').classList.add('flex');
+
+            showToast(`已進入房間 [${room}]，登入名稱：${name}`, 'success');
+
+            // Start Polling Loop
+            pollState();
+            if (state.pollingTimer) clearInterval(state.pollingTimer);
+            state.pollingTimer = setInterval(pollState, 2000);
+        }
+
+        function leaveRoom() {
+            if (confirm('確定要離開目前房間嗎？')) {
+                sfx.playClick();
+                if (state.pollingTimer) clearInterval(state.pollingTimer);
+                state.pollingTimer = null;
+                
+                document.getElementById('viewGame').classList.add('hidden');
+                document.getElementById('viewGame').classList.remove('flex');
+                document.getElementById('viewLogin').classList.remove('hidden');
+            }
+        }
+
+        function goHomeIfConfirmed() {
+            if (!document.getElementById('viewGame').classList.contains('hidden')) {
+                leaveRoom();
+            }
+        }
+
+        function copyRoomLink() {
+            sfx.playClick();
+            const textToCopy = state.roomCode;
+            
+            // Clipboard copy standard approach
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    showToast('房間號碼已複製到剪貼簿！', 'success');
+                }).catch(() => fallbackCopy(textToCopy));
+            } else {
+                fallbackCopy(textToCopy);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showToast('房間號碼已複製！', 'success');
+        }
+
+        // ================= HIDDEN HOST PANEL TOGGLE =================
+        function toggleHostPanel() {
+            sfx.playClick();
+            setHostPanelVisibility(!state.hostPanelVisible);
+        }
+
+        function setHostPanelVisibility(visible) {
+            state.hostPanelVisible = visible;
+            const panel = document.getElementById('hostPanel');
+            if (visible) {
+                panel.classList.remove('hidden');
+                showToast('已開啟房主控制台 👑', 'info');
+            } else {
+                panel.classList.add('hidden');
+            }
+        }
+
+        function setPresetQuestion(q) {
+            sfx.playClick();
+            document.getElementById('hostQuestionInput').value = q;
+        }
+
+        // ================= API FETCH & POLLING MECHANISM =================
+
+        async function fetchRoomData(room) {
+            if (state.localFallbackMode) {
+                return localSimulatedDB[room] || { status: 'setup', question: '', answers: {} };
+            }
+
+            try {
+                const url = `${GAS_API_URL}?room=${encodeURIComponent(room)}&t=${Date.now()}`;
+                const response = await fetch(url, { method: 'GET' });
+                if (!response.ok) throw new Error('HTTP network error');
+                const data = await response.json();
+                updateConnectionStatus(true, 'GAS 即時連線');
+                return data;
+            } catch (err) {
+                console.warn('GAS Fetch failed, switching to fallback mode or using cached structure:', err);
+                updateConnectionStatus(false, '本地模擬模式 (API受限)');
+                state.localFallbackMode = true;
+                if (!localSimulatedDB[room]) {
+                    localSimulatedDB[room] = { status: state.status, question: state.question, answers: state.answers };
+                }
+                return localSimulatedDB[room];
+            }
+        }
+
+        async function sendGameAction(payload) {
+            payload.room = state.roomCode;
+
+            if (state.localFallbackMode) {
+                // Local simulation mode handler
+                let roomData = localSimulatedDB[state.roomCode] || { status: 'setup', question: '', answers: {} };
+                if (payload.action === 'reset') {
+                    roomData.status = 'setup';
+                    roomData.question = '';
+                    roomData.answers = {};
+                } else if (payload.action === 'set_question') {
+                    roomData.status = 'playing';
+                    roomData.question = payload.question;
+                    roomData.answers = {};
+                } else if (payload.action === 'submit_answer') {
+                    roomData.answers[payload.playerName] = payload.answer;
+                } else if (payload.action === 'reveal') {
+                    roomData.status = 'revealed';
+                }
+                localSimulatedDB[state.roomCode] = roomData;
+                return { success: true };
+            }
+
+            try {
+                // Note: using text/plain prevents CORS preflight OPTIONS request issues on Google Apps Script
+                const response = await fetch(GAS_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                return result;
+            } catch (err) {
+                console.warn('POST action failed, falling back to local simulation:', err);
+                state.localFallbackMode = true;
+                return sendGameAction(payload); // Retry in fallback mode
+            }
+        }
+
+        function updateConnectionStatus(isOnline, text) {
+            const badge = document.getElementById('connectionBadge');
+            const dot = document.getElementById('connDot');
+            const label = document.getElementById('connText');
+            badge.classList.remove('hidden');
+            label.textContent = text;
+            if (isOnline) {
+                dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse';
+            } else {
+                dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-500';
+            }
+        }
+
+        async function pollState() {
+            if (!state.roomCode) return;
+
+            const data = await fetchRoomData(state.roomCode);
+            if (!data) return;
+
+            const newStatus = data.status || 'setup';
+            const newQuestion = data.question || '';
+            const newAnswers = data.answers || {};
+
+            const rawAnswersJSON = JSON.stringify(newAnswers);
+            const statusChanged = (state.status !== newStatus);
+            const answersChanged = (state.lastRawAnswersJSON !== rawAnswersJSON);
+
+            state.previousStatus = state.status;
+            state.status = newStatus;
+            state.question = newQuestion;
+            state.answers = newAnswers;
+            state.lastRawAnswersJSON = rawAnswersJSON;
+
+            // Trigger reveal sound effect when transition happens
+            if (statusChanged && newStatus === 'revealed') {
+                sfx.playFanfare();
+            }
+
+            renderGameUI(statusChanged, answersChanged);
+        }
+
+        // ================= HOST ACTIONS =================
+
+        async function hostSetQuestion() {
+            sfx.playClick();
+            const qInput = document.getElementById('hostQuestionInput');
+            const questionText = qInput.value.trim();
+
+            if (!questionText) {
+                showToast('請輸入題目內容！', 'error');
+                return;
+            }
+
+            showToast('正在發布題目...', 'info');
+            await sendGameAction({
+                action: 'set_question',
+                question: questionText
+            });
+            qInput.value = '';
+            showToast('題目發布成功！大家快填答！', 'success');
+            pollState();
+        }
+
+        async function hostRevealAnswers() {
+            sfx.playClick();
+            const count = Object.keys(state.answers).length;
+            if (count === 0) {
+                showToast('目前尚無人回答，無法開牌！', 'error');
+                return;
+            }
+            showToast('正在開牌揭曉...', 'info');
+            await sendGameAction({ action: 'reveal' });
+            pollState();
+        }
+
+        async function hostResetRound() {
+            sfx.playClick();
+            showToast('正在重置本輪遊戲...', 'info');
+            await sendGameAction({ action: 'reset' });
+            document.getElementById('inputPlayerAnswer').value = '';
+            document.getElementById('submitStatusText').classList.add('hidden');
+            pollState();
+            showToast('房間已重置為準備階段！', 'success');
+        }
+
+        // ================= PLAYER ACTIONS =================
+
+        async function handleAnswerSubmit(e) {
+            e.preventDefault();
+            sfx.playClick();
+
+            const ansInput = document.getElementById('inputPlayerAnswer');
+            const answer = ansInput.value.trim();
+
+            if (!answer) {
+                showToast('請填寫答案！', 'error');
+                return;
+            }
+
+            if (state.status !== 'playing') {
+                showToast('目前非答題階段！', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('btnSubmitAnswer');
+            btn.disabled = true;
+            btn.opacity = '0.7';
+
+            await sendGameAction({
+                action: 'submit_answer',
+                playerName: state.playerName,
+                answer: answer
+            });
+
+            btn.disabled = false;
+            btn.opacity = '1';
+            document.getElementById('submitStatusText').classList.remove('hidden');
+            showToast('心電答案已成功發送！', 'success');
+            pollState();
+        }
+
+        // ================= RENDER ENGINE =================
+
+        function renderGameUI(statusChanged, answersChanged) {
+            const questionElem = document.getElementById('displayQuestion');
+            const roundBadge = document.getElementById('roundStatusBadge');
+            const submitSection = document.getElementById('sectionPlayerSubmit');
+            const resultsSection = document.getElementById('sectionResults');
+
+            // 1. Update Question & Stage Badge
+            if (state.status === 'setup') {
+                roundBadge.textContent = '準備階段 🍵';
+                roundBadge.className = 'inline-block px-3 py-1 bg-mustard text-kraft-900 text-xs font-black rounded-full border-2 border-kraft-900 mb-3';
+                questionElem.textContent = '靜候房主派發題目中...';
+                submitSection.classList.add('hidden');
+                resultsSection.classList.add('hidden');
+            } else if (state.status === 'playing') {
+                roundBadge.textContent = '心電對決進行中 ⚡';
+                roundBadge.className = 'inline-block px-3 py-1 bg-matcha text-white text-xs font-black rounded-full border-2 border-kraft-900 mb-3 animate-pulse-gentle';
+                questionElem.textContent = state.question || '請聽題！';
+                submitSection.classList.remove('hidden');
+                resultsSection.classList.add('hidden');
+            } else if (state.status === 'revealed') {
+                roundBadge.textContent = '結果已揭曉 🎴';
+                roundBadge.className = 'inline-block px-3 py-1 bg-terracotta text-white text-xs font-black rounded-full border-2 border-kraft-900 mb-3';
+                questionElem.textContent = state.question || '本輪題目';
+                submitSection.classList.add('hidden');
+                resultsSection.classList.remove('hidden');
+            }
+
+            // 2. Render Player Cards Grid
+            renderCardsGrid();
+
+            // 3. Render Results Analysis if revealed
+            if (state.status === 'revealed') {
+                calculateResults();
+            }
+        }
+
+        function renderCardsGrid() {
+            const grid = document.getElementById('cardsGrid');
+            const emptyState = document.getElementById('cardsEmptyState');
+            const countBadge = document.getElementById('answerCountBadge');
+
+            const players = Object.keys(state.answers);
+            countBadge.textContent = `${players.length} 人已填答`;
+
+            if (players.length === 0) {
+                emptyState.classList.remove('hidden');
+                grid.innerHTML = '';
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            // Map color palette for revealed identical answers
+            const matchColorMap = assignMatchColors(state.answers);
+
+            let html = '';
+            players.forEach((pName, index) => {
+                const answerText = state.answers[pName] || '';
+                const isCurrentPlayer = (pName === state.playerName);
+                const isRevealed = (state.status === 'revealed');
+                
+                // Color assignments
+                const matchInfo = matchColorMap[answerText] || { bg: 'bg-kraft-50', border: 'border-kraft-900', text: 'text-kraft-900', badge: 'bg-kraft-200 text-kraft-900' };
+
+                html += `
+                <div class="perspective-1000 h-44 sm:h-48 w-full">
+                    <div id="card-inner-${index}" class="card-inner ${isRevealed ? 'is-flipped' : ''}">
+                        
+                        <!-- CARD FRONT (Unrevealed Back Pattern) -->
+                        <div class="card-front seigaiha-pattern border-3 border-kraft-900 rounded-xl p-4 flex flex-col justify-between shadow-retro text-kraft-50 select-none">
+                            <div class="flex justify-between items-start">
+                                <span class="text-xs font-black px-2 py-0.5 bg-kraft-900/80 rounded border border-kraft-200">
+                                    ${isCurrentPlayer ? '你 (You)' : '🎴 心電牌'}
+                                </span>
+                                <div class="w-6 h-6 rounded-full border border-kraft-200 flex items-center justify-center font-serifTC text-xs">
+                                    心
+                                </div>
+                            </div>
+
+                            <div class="text-center my-auto">
+                                <div class="font-black text-lg sm:text-xl truncate text-amber-200 font-serifTC">
+                                    ${escapeHTML(pName)}
+                                </div>
+                                <div class="text-xs font-bold opacity-90 mt-1">
+                                    ${state.status === 'playing' ? '✓ 已準備 (Hidden)' : '等待出題...'}
+                                </div>
+                            </div>
+
+                            <div class="text-center text-[10px] tracking-widest uppercase opacity-75 font-bold">
+                                Cloud Telepathy
+                            </div>
+                        </div>
+
+                        <!-- CARD BACK (Revealed Front Side) -->
+                        <div class="card-back ${matchInfo.bg} border-3 ${matchInfo.border} rounded-xl p-4 flex flex-col justify-between shadow-retro text-kraft-900">
+                            <div class="flex justify-between items-center border-b border-kraft-900/20 pb-1.5">
+                                <span class="font-black text-xs truncate max-w-[90px] ${matchInfo.text}">
+                                    ${escapeHTML(pName)} ${isCurrentPlayer ? ' (你)' : ''}
+                                </span>
+                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${matchInfo.badge}">
+                                    已開牌
+                                </span>
+                            </div>
+
+                            <div class="my-auto text-center px-1">
+                                <span class="text-xs font-bold text-kraft-800 block mb-0.5">心電答案：</span>
+                                <div class="font-black text-lg sm:text-xl ${matchInfo.text} font-serifTC break-all leading-snug">
+                                    「 ${escapeHTML(answerText)} 」
+                                </div>
+                            </div>
+
+                            <div class="text-right text-[10px] font-bold text-kraft-800">
+                                默契印 💮
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                `;
+            });
+
+            grid.innerHTML = html;
+
+            // Optional staggered flip effect when transition occurs
+            if (state.previousStatus !== 'revealed' && state.status === 'revealed') {
+                players.forEach((_, idx) => {
+                    const cardElem = document.getElementById(`card-inner-${idx}`);
+                    if (cardElem) {
+                        cardElem.classList.remove('is-flipped');
+                        setTimeout(() => {
+                            cardElem.classList.add('is-flipped');
+                            sfx.playFlip();
+                        }, idx * 120);
+                    }
+                });
+            }
+        }
+
+        // Assign colors based on answer frequencies for clear grouping
+        function assignMatchColors(answers) {
+            const counts = {};
+            Object.values(answers).forEach(ans => {
+                const normalized = ans.trim().toLowerCase();
+                counts[normalized] = (counts[normalized] || 0) + 1;
+            });
+
+            const map = {};
+            let colorIdx = 0;
+
+            Object.keys(counts).forEach(ansKey => {
+                if (counts[ansKey] > 1) {
+                    map[ansKey] = MATCH_COLORS[colorIdx % MATCH_COLORS.length];
+                    colorIdx++;
+                }
+            });
+
+            // Fallback default color for unique answers
+            return new Proxy(map, {
+                get: (target, prop) => {
+                    const norm = (prop || '').trim().toLowerCase();
+                    return target[norm] || {
+                        bg: 'bg-kraft-50',
+                        border: 'border-kraft-900',
+                        text: 'text-kraft-900',
+                        badge: 'bg-kraft-200 text-kraft-900'
+                    };
+                }
+            });
+        }
+
+        // ================= CALCULATE CONSENSUS & TELEPATHY SCORE =================
+        function calculateResults() {
+            const answersArray = Object.values(state.answers).map(a => a.trim().toLowerCase());
+            const total = answersArray.length;
+
+            if (total === 0) return;
+
+            const freqMap = {};
+            answersArray.forEach(ans => {
+                freqMap[ans] = (freqMap[ans] || 0) + 1;
+            });
+
+            let maxMatches = 0;
+            let topAnswer = '';
+
+            Object.entries(freqMap).forEach(([ans, count]) => {
+                if (count > maxMatches) {
+                    maxMatches = count;
+                    topAnswer = ans;
+                }
+            });
+
+            // Find original casing for presentation
+            const origTopAnswer = Object.values(state.answers).find(a => a.trim().toLowerCase() === topAnswer) || topAnswer;
+
+            // Telepathy Score Formula: Percentage of the largest agreeing group
+            const scorePercent = Math.round((maxMatches / total) * 100);
+
+            document.getElementById('telepathyScore').textContent = `${scorePercent}%`;
+            document.getElementById('topMatchText').textContent = `「${origTopAnswer}」(${maxMatches}人相同)`;
+
+            const titleElem = document.getElementById('resultTitle');
+            const subElem = document.getElementById('resultSubtitle');
+
+            if (scorePercent === 100) {
+                titleElem.textContent = '🎉 全員心電感應大成功！';
+                subElem.textContent = '太不可思議了！所有人答案完全一致！';
+            } else if (scorePercent >= 50) {
+                titleElem.textContent = '✨ 默契十分良好！';
+                subElem.textContent = `多數人都聯想到了「${origTopAnswer}」！`;
+            } else {
+                titleElem.textContent = '🌀 想法五花八門！';
+                subElem.textContent = '大家的思維非常有創意，下輪再接再厲！';
+            }
+        }
+
+        function escapeHTML(str) {
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
